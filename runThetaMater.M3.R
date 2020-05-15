@@ -1,10 +1,17 @@
 #!/usr/bin/Rscript
 
+# load library for command line parsing
+library(optparse)
+
+# load ThetaMater and dependencies
 library(ThetaMater)
 library(MCMCpack)
 library(ape)
 library(phangorn)
-library(optparse)
+
+# load libraries for plotting
+library(hexbin)
+library(RColorBrewer)
 
 option_list = list(
 	make_option(
@@ -73,7 +80,7 @@ option_list = list(
 	make_option(
 		c("-m", "--mutationRate"),
 		type="double",
-		default=0.1,
+		default=2.2e-8,
 		help="Mutation rate for calculating effective population size (Ne).",
 		metavar="double"
 	)
@@ -112,6 +119,22 @@ name=paste("tracePlot","M3","thetaPriors",opt$thetaShape,opt$thetaScale,"alphaPr
 pdf(name)
 plot(data.MCMC)
 dev.off()
+
+#print 3D hexbin plot. Colors indicate the number of MCMC steps in state (warmer colors show higher posterior probability
+rf <- colorRampPalette(rev(brewer.pal(11,'Spectral')))
+h <- hexbin(data.MCMC)
+pdf("hexbin.M3.pdf")
+plot(h, colramp=rf, xlab='theta', ylab='alpha')
+dev.off()
+
+#calculate Ne
+data.MCMC.Ne <- data.MCMC
+data.MCMC.Ne[,1] = data.MCMC.Ne[,1]/(opt$mutationRate*4)
+h <- hexbin(data.MCMC.Ne)
+pdf("hexbin.M3.Ne.pdf")
+plot(h, colramp=rf, xlab='Ne', ylab='alpha')
+dev.off()
+
 
 #summarize theta
 summary(data.MCMC)
