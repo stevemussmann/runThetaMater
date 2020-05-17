@@ -45,7 +45,7 @@ option_list = list(
 	make_option(
 		c("-d", "--burnin"),
 		type="integer",
-		default=10000,
+		default=100000,
 		help="Number of MCMC generations to discard as burnin.",
 		metavar="integer"
 	),
@@ -59,7 +59,7 @@ option_list = list(
 	make_option(
 		c("-k", "--classes"),
 		type="integer",
-		default=4,
+		default=12,
 		help="Number of rate categories for alpha. Typically 4 to 20.",
 		metavar="integer"
 	),
@@ -83,6 +83,13 @@ option_list = list(
 		default=2.2e-8,
 		help="Mutation rate for calculating effective population size (Ne).",
 		metavar="double"
+	),
+	make_option(
+		c("-r", "--run"),
+		type="integer",
+		default=1,
+		help="Run batch number",
+		metavar="integer"
 	)
 );
 
@@ -113,9 +120,15 @@ data.MCMC <- ThetaMater.M3(
 	alpha.scale = opt$alphaScale
 )
 
-#print trace plots
+# write dataset to file
 varnames(data.MCMC) <- c("theta", "alpha")
-name=paste("tracePlot","M3","thetaPriors",opt$thetaShape,opt$thetaScale,"alphaPriors",opt$alphaShape,opt$alphaScale,"pdf",sep=".")
+csvnamebase=paste(opt$file,"MCMCobj","M3","thetaPriors",opt$thetaShape,opt$thetaScale,"alphaPriors",opt$alphaShape,opt$alphaScale,"run",opt$run,sep="_")
+csvname=paste(csvnamebase,"csv",sep=".")
+write.csv(data.MCMC, csvname, row.names=F)
+
+#print trace plots
+namebase=paste(opt$file,"tracePlot","M3","thetaPriors",opt$thetaShape,opt$thetaScale,"alphaPriors",opt$alphaShape,opt$alphaScale,"run",opt$run,sep="_")
+name=paste(namebase,"pdf",sep=".")
 pdf(name)
 plot(data.MCMC)
 dev.off()
@@ -123,7 +136,9 @@ dev.off()
 #print 3D hexbin plot. Colors indicate the number of MCMC steps in state (warmer colors show higher posterior probability
 rf <- colorRampPalette(rev(brewer.pal(11,'Spectral')))
 h <- hexbin(data.MCMC)
-pdf("hexbin.M3.pdf")
+hexnamebase=paste(opt$file,"hexbin","M3","thetaPriors",opt$thetaShape,opt$thetaScale,"alphaPriors",opt$alphaShape,opt$alphaScale,"run",opt$run,sep="_")
+hexname=paste(hexnamebase,"pdf",sep=".")
+pdf(hexname)
 plot(h, colramp=rf, xlab='theta', ylab='alpha')
 dev.off()
 
@@ -131,7 +146,9 @@ dev.off()
 data.MCMC.Ne <- data.MCMC
 data.MCMC.Ne[,1] = data.MCMC.Ne[,1]/(opt$mutationRate*4)
 h <- hexbin(data.MCMC.Ne)
-pdf("hexbin.M3.Ne.pdf")
+hexnamebaseNE=paste(opt$file,"hexbin","M3","Ne","thetaPriors",opt$thetaShape,opt$thetaScale,"alphaPriors",opt$alphaShape,opt$alphaScale,"run",opt$run,sep="_")
+hexnameNE=paste(hexnamebaseNE,"pdf",sep=".")
+pdf(hexnameNE)
 plot(h, colramp=rf, xlab='Ne', ylab='alpha')
 dev.off()
 
